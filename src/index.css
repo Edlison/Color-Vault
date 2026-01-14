@@ -27,6 +27,16 @@
 
   /* Hover */
   --cv-hover-lift: 6px;
+
+  /* Layout */
+  --cv-card-min-h: 300px;
+  --cv-card-min-w: 300px;
+
+  /* Swatches */
+  --cv-swatch-aspect: 1;
+
+  /* Legend */
+  --cv-legend-pill-w: 12.5%;
 }
 
 .dark {
@@ -181,6 +191,8 @@ html.dark body::before {
 }
 
 .cv-swatch {
+  aspect-ratio: var(--cv-swatch-aspect);
+  display: block;
   border-radius: var(--radius-swatch);
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow:

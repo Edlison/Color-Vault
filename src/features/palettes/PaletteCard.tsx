@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Palette, AppMode } from '../../types/palette';
+import { UI_CONFIG } from '../../config/ui';
 import { getNormalizedColors } from '../../lib/color/parseColor';
 
 interface PaletteCardProps {
@@ -73,7 +74,7 @@ export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardPro
     const dx = clamp01(px) - 0.5;
     const dy = clamp01(py) - 0.5;
 
-    const maxDeg = 7; // subtle
+    const maxDeg = UI_CONFIG.hover.tiltMaxDeg;
     const rx = (-dy * maxDeg).toFixed(2);
     const ry = (dx * maxDeg).toFixed(2);
 
@@ -114,7 +115,7 @@ export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardPro
         className={`
           cv-card ${mode === 'view' ? 'cv-tilt' : ''} relative overflow-hidden
           p-4 sm:p-5
-          min-h-[280px]
+          min-h-[var(--cv-card-min-h)]
           flex flex-col
           ${mode === 'view' ? 'cursor-pointer' : ''}
           ${isDragging ? 'opacity-80' : ''}
@@ -127,41 +128,44 @@ export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardPro
         tabIndex={mode === 'view' ? 0 : -1}
         aria-label={mode === 'view' ? `Open preview for ${palette.name}` : undefined}
       >
-        {/* Swatch grid (fixed 2 rows x 4 columns so card height never changes) */}
-        <div className="grid grid-cols-4 grid-rows-2 gap-3">
-          {swatchSlots.map((color, index) => {
-            if (!color) {
+        {/* Swatch area (fixed 2 rows x 4 columns, vertically centered above divider) */}
+        <div className="flex-1 flex items-center">
+          <div className="grid grid-cols-4 grid-rows-2 gap-3 w-full">
+            {swatchSlots.map((color, index) => {
+              if (!color) {
+                return (
+                  <div
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`${palette.id}-empty-${index}`}
+                    className="w-full opacity-0"
+                    style={{ aspectRatio: 'var(--cv-swatch-aspect)' }}
+                    aria-hidden="true"
+                  />
+                );
+              }
+
               return (
-                <div
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`${palette.id}-empty-${index}`}
-                  className="aspect-square w-full opacity-0"
-                  aria-hidden="true"
+                <button
+                  key={`${palette.id}-${color}-${index}`}
+                  type="button"
+                  className="cv-swatch w-full relative"
+                  style={{ backgroundColor: color }}
+                  disabled={mode === 'edit'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void copyToClipboard(color);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  title={mode === 'edit' ? undefined : `Click to copy: ${color.toUpperCase()}`}
+                  aria-label={mode === 'edit' ? undefined : `Copy ${color.toUpperCase()}`}
                 />
               );
-            }
-
-            return (
-              <button
-                key={`${palette.id}-${color}-${index}`}
-                type="button"
-                className="cv-swatch aspect-square w-full relative"
-                style={{ backgroundColor: color }}
-                disabled={mode === 'edit'}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void copyToClipboard(color);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                title={mode === 'edit' ? undefined : `Click to copy: ${color.toUpperCase()}`}
-                aria-label={mode === 'edit' ? undefined : `Copy ${color.toUpperCase()}`}
-              />
-            );
-          })}
+            })}
+          </div>
         </div>
 
         {/* Divider + Footer (pushed lower) */}
-        <div className="mt-auto pt-6" aria-hidden="true">
+        <div className="pt-5" aria-hidden="true">
           <div
             className="h-px w-full"
             style={{ backgroundColor: 'var(--color-border-strong)', opacity: 0.35 }}

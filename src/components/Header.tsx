@@ -43,27 +43,37 @@ export function Header({ theme, onThemeChange, mode, onModeToggle }: HeaderProps
           <div className="flex items-center justify-between gap-3">
             {/* Logo & Site Name */}
             <div className="flex items-center gap-3 select-none">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: 'var(--color-text)' }}
-                aria-hidden="true"
-              >
-                <svg
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  style={{ color: 'var(--color-bg)' }}
-                >
-                  <rect x="4" y="6" width="4" height="12" rx="1" />
-                  <rect x="10" y="9" width="4" height="9" rx="1" />
-                  <rect x="16" y="7" width="4" height="11" rx="1" />
-                </svg>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" aria-hidden="true">
+                {UI_CONFIG.header.logo.kind === 'image' && UI_CONFIG.header.logo.imageSrc ? (
+                  <img
+                    src={UI_CONFIG.header.logo.imageSrc}
+                    alt={UI_CONFIG.header.logo.imageAlt}
+                    className="w-9 h-9 rounded-full object-cover"
+                    draggable={false}
+                  />
+                ) : (
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--color-text)' }}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      style={{ color: 'var(--color-bg)' }}
+                    >
+                      <rect x="4" y="6" width="4" height="12" rx="1" />
+                      <rect x="10" y="9" width="4" height="9" rx="1" />
+                      <rect x="16" y="7" width="4" height="11" rx="1" />
+                    </svg>
+                  </div>
+                )}
               </div>
               <h1
                 className="text-base sm:text-lg font-semibold tracking-tight"
                 style={{ color: 'var(--color-text)' }}
               >
-                Color-Vault
+                {UI_CONFIG.header.title}
               </h1>
             </div>
 

@@ -2,24 +2,38 @@
   "version": 1,
   "palettes": [
     {
-      "id": "okabe_ito",
-      "name": "Okabe-Ito",
-      "colors": ["#E69F00", "#56B4E9", "#009E73"],
-      "tags": ["colorblind", "accessible", "paper"],
+      "id": "coffee",
+      "name": "Coffee",
+      "colors": ["#25344F", "#617891", "#D5B893", "#6F4D38", "#632024"],
+      "tags": ["paper", "coffee"],
       "source": "builtin"
     },
     {
-      "id": "nord",
-      "name": "Nord",
-      "colors": ["#BF616A", "#D08770", "#EBCB8B", "#A3BE8C", "#B48EAD"],
+      "id": "wine",
+      "name": "Wine",
+      "colors": ["#501122", "#574144", "#BFA5A8", "#004A41", "#0E7C71"],
       "tags": ["aesthetic", "cold"],
       "source": "builtin"
     },
     {
-      "id": "material",
-      "name": "Material Design",
-      "colors": ["#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4"],
-      "tags": ["ui", "bright"],
+      "id": "classroom",
+      "name": "Classroom",
+      "colors": ["#B1C9C3", "#576F56", "#4F828F", "#E4B85D", "#CD9280", "#D7945D", "#E0D4B9"],
+      "tags": ["classroom"],
+      "source": "builtin"
+    },
+    {
+      "id": "moss",
+      "name": "Moss",
+      "colors": ["#4C3D19", "#354024", "#889063", "#CFBB99", "#E5D7C4"],
+      "tags": ["paper"],
+      "source": "builtin"
+    },
+    {
+      "id": "olive",
+      "name": "Olive",
+      "colors": ["#9BAD50", "#B6CFE4", "#393027"],
+      "tags": ["paper"],
       "source": "builtin"
     }
   ]

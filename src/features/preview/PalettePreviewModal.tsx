@@ -149,7 +149,7 @@ export function PalettePreviewModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange} modal={false}>
       <Dialog.Portal>
         <Dialog.Content 
-          className="fixed top-24 left-1/2 -translate-x-1/2
+          className="fixed top-[46%] left-1/2 -translate-x-1/2 -translate-y-1/2
                      w-full max-w-3xl
                      cv-card rounded-[28px] p-5 sm:p-6 animate-scale-in z-50"
         >
@@ -192,33 +192,45 @@ export function PalettePreviewModal({
           </div>
 
           {/* Shared legend: rounded rectangles, no visible color codes */}
-          <div
-            className="mt-4 grid gap-2"
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(seriesColors.length, 8)}, minmax(0, 1fr))`,
-            }}
-          >
-            {seriesColors.map((color, i) => (
-              <button
-                key={`${color}-${i}`}
-                type="button"
-                className="h-7 w-full rounded-[var(--radius-swatch)] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.99]"
-                style={{
-                  backgroundColor: color,
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset',
-                }}
-                onClick={() => void copyToClipboard(color)}
-                title={`Click to copy: ${color.toUpperCase()}`}
-                aria-label={`Copy ${color.toUpperCase()}`}
-              />
-            ))}
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: Math.ceil(seriesColors.length / 8) }).map((_, row) => {
+              const rowSlice = seriesColors.slice(row * 8, row * 8 + 8);
+              const n = rowSlice.length;
+              if (n === 0) return null;
+
+              return (
+                <div
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={`legend-row-${row}`}
+                  className="relative h-7"
+                >
+                  {rowSlice.map((color, i) => (
+                    <button
+                      key={`${color}-${row}-${i}`}
+                      type="button"
+                      className="absolute top-0 h-7 rounded-[var(--radius-swatch)] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.99]"
+                      style={{
+                        width: 'var(--cv-legend-pill-w)',
+                        left: `${((i + 0.5) * 100) / n}%`, // centers evenly distributed
+                        transform: 'translateX(-50%)',
+                        backgroundColor: color,
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset',
+                      }}
+                      onClick={() => void copyToClipboard(color)}
+                      title={`Click to copy: ${color.toUpperCase()}`}
+                      aria-label={`Copy ${color.toUpperCase()}`}
+                    />
+                  ))}
+                </div>
+              );
+            })}
           </div>
 
           {/* Close button */}
           <Dialog.Close asChild>
             <button
-              className="absolute top-4 right-4 w-10 h-10 rounded-full transition-all duration-200 hover:scale-105"
+              className="absolute top-4 right-4 w-10 h-10 rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center"
               style={{ 
                 backgroundColor: 'var(--color-surface)',
                 color: 'var(--color-text-muted)' 

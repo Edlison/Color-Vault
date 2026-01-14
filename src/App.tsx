@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Palette, AppMode, Theme } from './types/palette';
 import { Header } from './components/Header';
+import { SiteFooter } from './components/SiteFooter';
 import { FooterConsent } from './components/FooterConsent';
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 import { PaletteGrid } from './features/palettes/PaletteGrid';
@@ -60,6 +61,21 @@ function App() {
       saveTheme(themeToApply);
     }
   }, [theme]);
+
+  // Apply page title + favicon (config-driven)
+  useEffect(() => {
+    document.title = UI_CONFIG.site.pageTitle;
+
+    const { href, type } = UI_CONFIG.site.favicon;
+    if (!href) return;
+    const head = document.head;
+    const existing = head.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    const link = existing ?? document.createElement('link');
+    link.rel = 'icon';
+    link.href = href;
+    if (type) link.type = type;
+    if (!existing) head.appendChild(link);
+  }, []);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -174,6 +190,10 @@ function App() {
         ['--radius-card' as never]: `${UI_CONFIG.radii.card}px`,
         ['--radius-swatch' as never]: `${UI_CONFIG.radii.swatch}px`,
         ['--cv-hover-lift' as never]: `${UI_CONFIG.hover.liftPx}px`,
+        ['--cv-card-min-h' as never]: `${UI_CONFIG.layout.cardMinHeightPx}px`,
+        ['--cv-card-min-w' as never]: `${UI_CONFIG.layout.cardMinWidthPx}px`,
+        ['--cv-swatch-aspect' as never]: `${UI_CONFIG.swatches.aspectRatio}`,
+        ['--cv-legend-pill-w' as never]: `${Math.min(UI_CONFIG.legend.pillWidthPercent, 12.5)}%`,
       }}
     >
       <Header 
@@ -232,6 +252,8 @@ function App() {
           )}
         </div>
       </main>
+
+      <SiteFooter />
 
       {/* Consent Footer */}
       <FooterConsent 

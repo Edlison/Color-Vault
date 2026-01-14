@@ -17,12 +17,64 @@ export const UI_CONFIG = {
   },
 
   /**
+   * Brand / meta
+   */
+  site: {
+    // Document title shown in browser tab
+    pageTitle: 'Color Vault | Academic Color Palettes',
+    // Favicon link in <head>
+    favicon: {
+      // Keep this in sync with header logo for best branding consistency.
+      // To disable, set href to an empty string.
+      href: '/logo.svg',
+      type: 'image/svg+xml',
+    },
+  },
+
+  header: {
+    title: 'Color Vault',
+    logo: {
+      // Use the same SVG file as favicon by default.
+      kind: 'image' as 'mark' | 'image',
+      // When kind === 'image'
+      imageSrc: '/logo.svg',
+      imageAlt: 'Logo',
+    },
+  },
+
+  footer: {
+    copyright: '© 2026 Color Vault. All rights reserved.',
+  },
+
+  /**
    * Radii (in px)
-   * Note: "角度更尖一些" -> use smaller radius for swatches.
+   * Note: "shaper" -> use smaller radius for swatches.
    */
   radii: {
     card: 20,
     swatch: 12,
+  },
+
+  swatches: {
+    /**
+     * Width / height ratio.
+     * 1 = square, >1 = wider (appears "longer"), <1 = taller.
+     */
+    aspectRatio: 1,
+  },
+
+  legend: {
+    /**
+     * Legend pill width as percent of the legend container.
+     * 12.5% == exactly 1/8 width. Keep <= 12.5 to avoid overlap when showing 8.
+     */
+    pillWidthPercent: 8,
+  },
+
+  layout: {
+    // Slightly taller cards (requested)
+    cardMinHeightPx: 300,
+    cardMinWidthPx: 320,
   },
 
   /**
@@ -30,7 +82,10 @@ export const UI_CONFIG = {
    */
   hover: {
     // Smaller lift than before (was ~6px)
-    liftPx: 4,
+    liftPx: 1,
+
+    // Card tilt intensity on hover (degrees)
+    tiltMaxDeg: 4,
   },
 } as const;
 
