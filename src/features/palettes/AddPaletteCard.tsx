@@ -7,27 +7,29 @@ export function AddPaletteCard({ onClick }: AddPaletteCardProps) {
     <button
       onClick={onClick}
       className="
-        glass-strong rounded-2xl overflow-hidden
-        transition-all duration-300 ease-out
-        cursor-pointer hover:-translate-y-1 hover:shadow-xl
+        cv-card cv-tilt overflow-hidden
+        transition-all duration-200
+        cursor-pointer
         flex flex-col items-center justify-center
-        min-h-[180px]
+        min-h-[280px]
+        p-4 sm:p-5
         border-2 border-dashed
       "
-      style={{ 
-        borderColor: 'var(--color-border-strong)'
+      style={{
+        borderColor: 'var(--color-border-strong)',
+        backgroundColor: 'var(--glass-bg)',
       }}
     >
       <div 
         className="p-4 rounded-full mb-3"
-        style={{ backgroundColor: 'var(--color-surface)' }}
+        style={{ backgroundColor: 'var(--color-text)' }}
       >
         <svg 
           className="w-8 h-8" 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
-          style={{ color: 'var(--color-accent)' }}
+          style={{ color: 'var(--color-bg)' }}
         >
           <path 
             strokeLinecap="round" 

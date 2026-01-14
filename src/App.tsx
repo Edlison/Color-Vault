@@ -6,6 +6,7 @@ import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 import { PaletteGrid } from './features/palettes/PaletteGrid';
 import { EditPaletteModal } from './features/palettes/EditPaletteModal';
 import { PalettePreviewModal } from './features/preview/PalettePreviewModal';
+import { UI_CONFIG } from './config/ui';
 import { 
   fetchBuiltinPalettes, 
   loadUserPalettes, 
@@ -26,7 +27,10 @@ function App() {
   console.log('Color-Vault: App component rendering');
   
   // Theme state
-  const [theme, setTheme] = useState<Theme>(() => getStoredTheme());
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (!UI_CONFIG.features.themeToggleEnabled) return UI_CONFIG.theme.defaultTheme;
+    return getStoredTheme();
+  });
   
   // App mode state
   const [mode, setMode] = useState<AppMode>('view');
@@ -50,12 +54,16 @@ function App() {
 
   // Apply theme on mount and when theme changes
   useEffect(() => {
-    applyTheme(theme);
-    saveTheme(theme);
+    const themeToApply = UI_CONFIG.features.themeToggleEnabled ? theme : UI_CONFIG.theme.defaultTheme;
+    applyTheme(themeToApply);
+    if (UI_CONFIG.features.themeToggleEnabled) {
+      saveTheme(themeToApply);
+    }
   }, [theme]);
 
   // Listen for system theme changes
   useEffect(() => {
+    if (!UI_CONFIG.features.themeToggleEnabled) return;
     if (theme !== 'system') return;
     
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -85,6 +93,7 @@ function App() {
 
   // Handle theme change
   const handleThemeChange = useCallback((newTheme: Theme) => {
+    if (!UI_CONFIG.features.themeToggleEnabled) return;
     setTheme(newTheme);
   }, []);
 
@@ -158,7 +167,15 @@ function App() {
   const displayPalettes = mode === 'edit' ? draftPalettes : palettes;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        // Drive CSS variables from config
+        ['--radius-card' as never]: `${UI_CONFIG.radii.card}px`,
+        ['--radius-swatch' as never]: `${UI_CONFIG.radii.swatch}px`,
+        ['--cv-hover-lift' as never]: `${UI_CONFIG.hover.liftPx}px`,
+      }}
+    >
       <Header 
         theme={theme}
         onThemeChange={handleThemeChange}
@@ -171,11 +188,11 @@ function App() {
           {/* Mode indicator banner */}
           {mode === 'edit' && (
             <div 
-              className="glass rounded-xl px-4 py-3 mb-6 flex items-center gap-3 animate-slide-up"
+              className="cv-island rounded-full px-4 py-2.5 mb-6 flex items-center gap-3 animate-slide-up"
             >
               <div 
                 className="w-2 h-2 rounded-full animate-pulse"
-                style={{ backgroundColor: 'var(--color-accent)' }}
+                style={{ backgroundColor: 'var(--color-text)' }}
               />
               <p 
                 className="text-sm"

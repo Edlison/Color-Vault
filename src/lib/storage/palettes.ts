@@ -8,7 +8,8 @@ const PALETTES_STORAGE_KEY = 'cv_palettes_v1';
  */
 export async function fetchBuiltinPalettes(): Promise<Palette[]> {
   try {
-    const response = await fetch('/palettes.json');
+    // Force a fresh read (avoid stale cached palettes after rebuild/deploy).
+    const response = await fetch('/palettes.json', { cache: 'no-store' });
     if (!response.ok) {
       console.warn('Failed to fetch palettes.json:', response.status);
       return [];
@@ -23,13 +24,9 @@ export async function fetchBuiltinPalettes(): Promise<Palette[]> {
 
 /**
  * Load user palettes from localStorage
- * Returns null if no data exists or consent not given
+ * Returns null if no data exists
  */
 export function loadUserPalettes(): Palette[] | null {
-  if (!hasConsent()) {
-    return null;
-  }
-  
   try {
     const stored = localStorage.getItem(PALETTES_STORAGE_KEY);
     if (!stored) return null;

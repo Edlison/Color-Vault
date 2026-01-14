@@ -1,4 +1,5 @@
 import { type Theme, type AppMode } from '../types/palette';
+import { UI_CONFIG } from '../config/ui';
 
 interface HeaderProps {
   theme: Theme;
@@ -36,69 +37,88 @@ export function Header({ theme, onThemeChange, mode, onModeToggle }: HeaderProps
   };
 
   return (
-    <header className="glass sticky top-0 z-50 px-6 py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo & Site Name */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-cyan-400 to-emerald-400 flex items-center justify-center shadow-md">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="4" y="6" width="4" height="12" rx="1" />
-              <rect x="10" y="9" width="4" height="9" rx="1" />
-              <rect x="16" y="7" width="4" height="11" rx="1" />
-            </svg>
+    <header className="sticky top-3 z-50 px-4">
+      <div className="max-w-7xl mx-auto flex justify-center">
+        <div className="cv-island w-full max-w-[920px] px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            {/* Logo & Site Name */}
+            <div className="flex items-center gap-3 select-none">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-text)' }}
+                aria-hidden="true"
+              >
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ color: 'var(--color-bg)' }}
+                >
+                  <rect x="4" y="6" width="4" height="12" rx="1" />
+                  <rect x="10" y="9" width="4" height="9" rx="1" />
+                  <rect x="16" y="7" width="4" height="11" rx="1" />
+                </svg>
+              </div>
+              <h1
+                className="text-base sm:text-lg font-semibold tracking-tight"
+                style={{ color: 'var(--color-text)' }}
+              >
+                Color-Vault
+              </h1>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Settings/Edit Toggle Button */}
+              <button
+                onClick={onModeToggle}
+                className={`
+                  relative h-10 px-3 rounded-full transition-all duration-200
+                  ${mode === 'view' ? 'hover:scale-[1.02]' : 'hover:scale-[1.02]'}
+                `}
+                style={{
+                  backgroundColor: mode === 'edit' ? 'var(--color-text)' : 'var(--glass-bg)',
+                  color: mode === 'edit' ? 'var(--color-bg)' : 'var(--color-text-secondary)',
+                  border: '1px solid var(--glass-border)',
+                }}
+                title={mode === 'edit' ? 'Save & Exit Edit Mode' : 'Enter Edit Mode'}
+                aria-label={mode === 'edit' ? 'Save and exit edit mode' : 'Enter edit mode'}
+              >
+                <span className="flex items-center gap-2">
+                  {mode === 'edit' ? (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {mode === 'edit' ? 'Done' : 'Edit'}
+                  </span>
+                </span>
+              </button>
+
+              {/* Theme Toggle Button (config-controlled, currently disabled) */}
+              {UI_CONFIG.features.themeToggleEnabled && (
+                <button
+                  onClick={toggleTheme}
+                  className="h-10 w-10 rounded-full transition-all duration-200 hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: 'var(--glass-bg)',
+                    color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--glass-border)',
+                  }}
+                  title={`Theme: ${theme}`}
+                  aria-label={`Current theme: ${theme}. Click to change.`}
+                >
+                  <span className="flex items-center justify-center">{getThemeIcon()}</span>
+                </button>
+              )}
+            </div>
           </div>
-          <h1 className="text-xl font-semibold tracking-tight" style={{ color: 'var(--color-text)' }}>
-            Color-Vault
-          </h1>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          {/* Settings/Edit Toggle Button */}
-          <button
-            onClick={onModeToggle}
-            className={`
-              relative p-2.5 rounded-xl transition-all duration-300 ease-out
-              ${mode === 'edit' 
-                ? 'bg-[var(--color-accent)] text-white shadow-lg animate-pulse-glow' 
-                : 'hover:bg-[var(--color-surface-hover)]'
-              }
-            `}
-            style={{ 
-              color: mode === 'edit' ? 'white' : 'var(--color-text-secondary)',
-              backgroundColor: mode === 'view' ? 'var(--color-surface)' : undefined
-            }}
-            title={mode === 'edit' ? 'Save & Exit Edit Mode' : 'Enter Edit Mode'}
-            aria-label={mode === 'edit' ? 'Save and exit edit mode' : 'Enter edit mode'}
-          >
-            {mode === 'edit' ? (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            )}
-            {mode === 'edit' && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
-            )}
-          </button>
-
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="p-2.5 rounded-xl transition-all duration-200 hover:scale-105"
-            style={{ 
-              backgroundColor: 'var(--color-surface)',
-              color: 'var(--color-text-secondary)'
-            }}
-            title={`Theme: ${theme}`}
-            aria-label={`Current theme: ${theme}. Click to change.`}
-          >
-            {getThemeIcon()}
-          </button>
         </div>
       </div>
     </header>

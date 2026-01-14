@@ -1,5 +1,4 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import * as Tabs from '@radix-ui/react-tabs';
 import ReactECharts from 'echarts-for-react';
 import type { Palette } from '../../types/palette';
 import { getNormalizedColors } from '../../lib/color/parseColor';
@@ -10,32 +9,19 @@ interface PalettePreviewModalProps {
   palette: Palette | null;
 }
 
-// Deterministic sample data for consistency
-const SAMPLE_DATA = {
-  categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  radarIndicators: [
-    { name: 'Sales', max: 100 },
-    { name: 'Admin', max: 100 },
-    { name: 'Tech', max: 100 },
-    { name: 'Support', max: 100 },
-    { name: 'Dev', max: 100 },
-    { name: 'Marketing', max: 100 },
-  ],
-  seriesData: [
-    [65, 59, 80, 81, 56, 55],
-    [28, 48, 40, 19, 86, 27],
-    [45, 25, 16, 36, 67, 78],
-    [32, 72, 55, 42, 38, 65],
-    [18, 35, 62, 78, 45, 52],
-    [52, 68, 24, 58, 72, 41],
-  ],
-  radarSeriesData: [
-    [65, 59, 80, 81, 56, 55],
-    [28, 48, 40, 19, 86, 27],
-    [45, 25, 16, 36, 67, 78],
-    [32, 72, 55, 42, 38, 65],
-  ],
-};
+const LINE_CATEGORIES = ['1', '2', '3'];
+const BAR_CATEGORIES = [''];
+
+function makeSeriesData(seed: number, length: number) {
+  // Deterministic pseudo-random generator (LCG) so previews are stable.
+  let x = (seed + 1) * 1103515245 + 12345;
+  const out: number[] = [];
+  for (let i = 0; i < length; i += 1) {
+    x = (x * 1103515245 + 12345) & 0x7fffffff;
+    out.push(12 + (x % 78)); // 12..89
+  }
+  return out;
+}
 
 export function PalettePreviewModal({ 
   open, 
@@ -45,55 +31,46 @@ export function PalettePreviewModal({
   if (!palette) return null;
 
   const colors = getNormalizedColors(palette.colors);
-  const numSeries = Math.min(colors.length, 6);
+  const seriesColors = colors; // use all colors
+  const seriesNames = seriesColors.map((c) => c.toUpperCase());
 
   const baseChartOptions = {
-    color: colors,
+    color: seriesColors,
     backgroundColor: 'transparent',
     textStyle: {
       fontFamily: 'DM Sans, system-ui, sans-serif',
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true,
+      top: 8,
+      left: 8,
+      right: 8,
+      bottom: 8,
+      containLabel: false,
     },
-    legend: {
-      textStyle: {
-        color: 'var(--color-text-secondary)',
-      },
-    },
-    tooltip: {
-      trigger: 'axis' as const,
-      backgroundColor: 'var(--glass-bg)',
-      borderColor: 'var(--glass-border)',
-      textStyle: {
-        color: 'var(--color-text)',
-      },
-    },
+    legend: { show: false },
+    tooltip: { show: false },
   };
 
   const lineChartOptions = {
     ...baseChartOptions,
     xAxis: {
       type: 'category' as const,
-      data: SAMPLE_DATA.categories,
-      axisLine: { lineStyle: { color: 'var(--color-border-strong)' } },
-      axisLabel: { color: 'var(--color-text-secondary)' },
+      data: LINE_CATEGORIES,
+      show: false,
+      boundaryGap: false,
     },
     yAxis: {
       type: 'value' as const,
-      axisLine: { lineStyle: { color: 'var(--color-border-strong)' } },
-      axisLabel: { color: 'var(--color-text-secondary)' },
-      splitLine: { lineStyle: { color: 'var(--color-border-strong)', opacity: 0.3 } },
+      show: false,
     },
-    series: SAMPLE_DATA.seriesData.slice(0, numSeries).map((data, i) => ({
-      name: `Series ${i + 1}`,
+    series: seriesNames.map((name, i) => ({
+      name,
       type: 'line' as const,
-      data,
-      smooth: true,
+      data: makeSeriesData(i, LINE_CATEGORIES.length),
+      smooth: false,
+      symbol: 'circle',
       symbolSize: 6,
+      lineStyle: { width: 2, opacity: 0.92 },
     })),
   };
 
@@ -101,160 +78,147 @@ export function PalettePreviewModal({
     ...baseChartOptions,
     xAxis: {
       type: 'category' as const,
-      data: SAMPLE_DATA.categories,
-      axisLine: { lineStyle: { color: 'var(--color-border-strong)' } },
-      axisLabel: { color: 'var(--color-text-secondary)' },
+      data: BAR_CATEGORIES,
+      show: false,
     },
     yAxis: {
       type: 'value' as const,
-      axisLine: { lineStyle: { color: 'var(--color-border-strong)' } },
-      axisLabel: { color: 'var(--color-text-secondary)' },
-      splitLine: { lineStyle: { color: 'var(--color-border-strong)', opacity: 0.3 } },
+      show: false,
     },
-    series: SAMPLE_DATA.seriesData.slice(0, numSeries).map((data, i) => ({
-      name: `Series ${i + 1}`,
+    series: seriesNames.map((name, i) => ({
+      name,
       type: 'bar' as const,
-      data,
-      barGap: '10%',
-      barCategoryGap: '30%',
+      data: makeSeriesData(i + 10, BAR_CATEGORIES.length),
+      barWidth: 10,
     })),
   };
 
   const radarChartOptions = {
     ...baseChartOptions,
-    tooltip: {
-      trigger: 'item' as const,
-      backgroundColor: 'var(--glass-bg)',
-      borderColor: 'var(--glass-border)',
-      textStyle: {
-        color: 'var(--color-text)',
-      },
-    },
     radar: {
-      indicator: SAMPLE_DATA.radarIndicators,
+      // 3 dimensions, multiple series (layers) using all colors
+      indicator: Array.from({ length: 3 }).map(() => ({ name: '', max: 100 })),
+      radius: '82%',
+      center: ['50%', '56%'],
+      splitNumber: 4,
       axisName: {
-        color: 'var(--color-text-secondary)',
+        show: false,
       },
       splitLine: {
-        lineStyle: { color: 'var(--color-border-strong)', opacity: 0.3 },
+        lineStyle: { color: 'var(--color-border-strong)', opacity: 0.18 },
       },
       splitArea: {
         show: false,
       },
       axisLine: {
-        lineStyle: { color: 'var(--color-border-strong)', opacity: 0.3 },
+        lineStyle: { color: 'var(--color-border-strong)', opacity: 0.18 },
       },
     },
     series: [
       {
         type: 'radar' as const,
-        data: SAMPLE_DATA.radarSeriesData.slice(0, Math.min(colors.length, 4)).map((data, i) => ({
-          value: data,
-          name: `Series ${i + 1}`,
-          areaStyle: { opacity: 0.2 },
+        data: seriesNames.map((name, i) => ({
+          value: makeSeriesData(i + 30, 3),
+          name,
+          areaStyle: { opacity: 0.10 },
+          lineStyle: { width: 2, opacity: 0.92 },
         })),
       },
     ],
   };
 
+  const copyToClipboard = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value.toUpperCase());
+    } catch {
+      // Clipboard might be unavailable (permissions); fail silently
+    }
+  };
+
+  const onChartEvents = {
+    click: (params: { seriesIndex?: number }) => {
+      const idx = params?.seriesIndex;
+      if (typeof idx !== 'number') return;
+      const color = seriesColors[idx];
+      if (!color) return;
+      void copyToClipboard(color);
+    },
+  };
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={onOpenChange} modal={false}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in z-50" />
         <Dialog.Content 
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-                     w-full max-w-3xl max-h-[90vh] overflow-auto
-                     glass-strong rounded-2xl p-6 animate-scale-in z-50"
+          className="fixed top-24 left-1/2 -translate-x-1/2
+                     w-full max-w-3xl
+                     cv-card rounded-[28px] p-5 sm:p-6 animate-scale-in z-50"
         >
-          {/* Header */}
-          <div className="mb-6">
-            <Dialog.Title 
-              className="text-xl font-semibold mb-2"
-              style={{ color: 'var(--color-text)' }}
-            >
-              {palette.name}
-            </Dialog.Title>
-            
-            {/* Color strip */}
-            <div className="h-8 rounded-lg overflow-hidden flex">
-              {colors.map((color, index) => (
-                <div
-                  key={index}
-                  className="flex-1 relative group cursor-pointer"
-                  style={{ backgroundColor: color }}
-                  onClick={() => navigator.clipboard.writeText(color)}
-                  title={`Click to copy: ${color}`}
-                >
-                  <span className="absolute inset-0 flex items-center justify-center text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ 
-                      backgroundColor: 'rgba(0,0,0,0.4)',
-                      color: 'white'
-                    }}
-                  >
-                    {color.toUpperCase()}
-                  </span>
-                </div>
-              ))}
+          {/* Title */}
+          <Dialog.Title
+            className="text-lg sm:text-xl font-semibold mb-4"
+            style={{ color: 'var(--color-text)' }}
+          >
+            {palette.name}
+          </Dialog.Title>
+
+          {/* 3 charts (smaller rectangles, no borders between) */}
+          <div className="overflow-hidden rounded-[18px]" style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-0">
+              <div className="h-[140px] sm:h-[160px]">
+                <ReactECharts
+                  option={lineChartOptions}
+                  style={{ width: '100%', height: '100%' }}
+                  opts={{ renderer: 'svg' }}
+                  onEvents={onChartEvents}
+                />
+              </div>
+              <div className="h-[140px] sm:h-[160px]">
+                <ReactECharts
+                  option={barChartOptions}
+                  style={{ width: '100%', height: '100%' }}
+                  opts={{ renderer: 'svg' }}
+                  onEvents={onChartEvents}
+                />
+              </div>
+              <div className="h-[160px] sm:h-[190px]">
+                <ReactECharts
+                  option={radarChartOptions}
+                  style={{ width: '100%', height: '100%' }}
+                  opts={{ renderer: 'svg' }}
+                  onEvents={onChartEvents}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Tabs */}
-          <Tabs.Root defaultValue="line" className="w-full">
-            <Tabs.List 
-              className="flex gap-1 p-1 rounded-xl mb-4"
-              style={{ backgroundColor: 'var(--color-surface)' }}
-            >
-              {['line', 'bar', 'radar'].map((tab) => (
-                <Tabs.Trigger
-                  key={tab}
-                  value={tab}
-                  className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                             data-[state=active]:bg-white data-[state=active]:shadow-sm
-                             dark:data-[state=active]:bg-slate-700"
-                  style={{ 
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)} Chart
-                </Tabs.Trigger>
-              ))}
-            </Tabs.List>
-
-            <Tabs.Content value="line" className="animate-fade-in">
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
-                <ReactECharts 
-                  option={lineChartOptions} 
-                  style={{ height: '350px' }}
-                  opts={{ renderer: 'svg' }}
-                />
-              </div>
-            </Tabs.Content>
-
-            <Tabs.Content value="bar" className="animate-fade-in">
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
-                <ReactECharts 
-                  option={barChartOptions} 
-                  style={{ height: '350px' }}
-                  opts={{ renderer: 'svg' }}
-                />
-              </div>
-            </Tabs.Content>
-
-            <Tabs.Content value="radar" className="animate-fade-in">
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
-                <ReactECharts 
-                  option={radarChartOptions} 
-                  style={{ height: '350px' }}
-                  opts={{ renderer: 'svg' }}
-                />
-              </div>
-            </Tabs.Content>
-          </Tabs.Root>
+          {/* Shared legend: rounded rectangles, no visible color codes */}
+          <div
+            className="mt-4 grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${Math.min(seriesColors.length, 8)}, minmax(0, 1fr))`,
+            }}
+          >
+            {seriesColors.map((color, i) => (
+              <button
+                key={`${color}-${i}`}
+                type="button"
+                className="h-7 w-full rounded-[var(--radius-swatch)] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.99]"
+                style={{
+                  backgroundColor: color,
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset',
+                }}
+                onClick={() => void copyToClipboard(color)}
+                title={`Click to copy: ${color.toUpperCase()}`}
+                aria-label={`Copy ${color.toUpperCase()}`}
+              />
+            ))}
+          </div>
 
           {/* Close button */}
           <Dialog.Close asChild>
             <button
-              className="absolute top-4 right-4 p-2 rounded-lg transition-all duration-200 hover:scale-110"
+              className="absolute top-4 right-4 w-10 h-10 rounded-full transition-all duration-200 hover:scale-105"
               style={{ 
                 backgroundColor: 'var(--color-surface)',
                 color: 'var(--color-text-muted)' 

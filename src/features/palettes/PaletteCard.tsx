@@ -1,7 +1,8 @@
+import { useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Palette, AppMode } from '../../types/palette';
-import { getNormalizedColors, shouldUseLightText } from '../../lib/color/parseColor';
+import { getNormalizedColors } from '../../lib/color/parseColor';
 
 interface PaletteCardProps {
   palette: Palette;
@@ -12,6 +13,10 @@ interface PaletteCardProps {
 
 export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardProps) {
   const colors = getNormalizedColors(palette.colors);
+  const visibleColors = colors.slice(0, 8);
+  const swatchSlots = Array.from({ length: 8 }, (_, i) => visibleColors[i]);
+  const tiltRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
   
   const {
     attributes,
@@ -31,8 +36,22 @@ export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardPro
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const copyToClipboard = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value.toUpperCase());
+    } catch {
+      // Clipboard might be unavailable (permissions); fail silently
+    }
+  };
+
   const handleClick = () => {
-    if (mode === 'view') {
+    if (mode === 'view') onClick();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (mode !== 'view') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
       onClick();
     }
   };
@@ -42,98 +61,140 @@ export function PaletteCard({ palette, mode, onClick, onDelete }: PaletteCardPro
     onDelete?.();
   };
 
+  const updateTilt = (clientX: number, clientY: number) => {
+    const el = tiltRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width;
+    const py = (clientY - rect.top) / rect.height;
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+    const dx = clamp01(px) - 0.5;
+    const dy = clamp01(py) - 0.5;
+
+    const maxDeg = 7; // subtle
+    const rx = (-dy * maxDeg).toFixed(2);
+    const ry = (dx * maxDeg).toFixed(2);
+
+    el.style.setProperty('--rx', `${rx}deg`);
+    el.style.setProperty('--ry', `${ry}deg`);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (mode !== 'view' || isDragging) return;
+    if (!tiltRef.current) return;
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => updateTilt(x, y));
+  };
+
+  const handleMouseLeave = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+
+    const el = tiltRef.current;
+    if (!el) return;
+    el.style.setProperty('--rx', `0deg`);
+    el.style.setProperty('--ry', `0deg`);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`
-        glass-strong rounded-2xl overflow-hidden
-        transition-all duration-300 ease-out
-        ${mode === 'view' 
-          ? 'cursor-pointer hover:-translate-y-1 hover:shadow-xl' 
-          : 'cursor-grab active:cursor-grabbing'
-        }
-        ${isDragging ? 'shadow-2xl z-10' : ''}
-      `}
-      onClick={handleClick}
+      className={`${mode === 'edit' ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
       {...(mode === 'edit' ? { ...attributes, ...listeners } : {})}
     >
-      {/* Color Preview Strip */}
-      <div className="h-20 flex">
-        {colors.map((color, index) => (
-          <div
-            key={`${color}-${index}`}
-            className="flex-1 relative group"
-            style={{ backgroundColor: color }}
-          >
-            {/* Color code tooltip on hover */}
-            <div 
-              className={`
-                absolute inset-x-0 bottom-0 py-1 text-center text-xs font-mono
-                opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                ${shouldUseLightText(color) ? 'text-white/90' : 'text-black/70'}
-              `}
-              style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
-            >
-              {color.toUpperCase()}
-            </div>
-          </div>
-        ))}
-      </div>
+      <div
+        ref={tiltRef}
+        className={`
+          cv-card ${mode === 'view' ? 'cv-tilt' : ''} relative overflow-hidden
+          p-4 sm:p-5
+          min-h-[280px]
+          flex flex-col
+          ${mode === 'view' ? 'cursor-pointer' : ''}
+          ${isDragging ? 'opacity-80' : ''}
+        `}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        role={mode === 'view' ? 'button' : undefined}
+        tabIndex={mode === 'view' ? 0 : -1}
+        aria-label={mode === 'view' ? `Open preview for ${palette.name}` : undefined}
+      >
+        {/* Swatch grid (fixed 2 rows x 4 columns so card height never changes) */}
+        <div className="grid grid-cols-4 grid-rows-2 gap-3">
+          {swatchSlots.map((color, index) => {
+            if (!color) {
+              return (
+                <div
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={`${palette.id}-empty-${index}`}
+                  className="aspect-square w-full opacity-0"
+                  aria-hidden="true"
+                />
+              );
+            }
 
-      {/* Card Info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 
-              className="font-medium text-base"
-              style={{ color: 'var(--color-text)' }}
-            >
-              {palette.name}
-            </h3>
-            <p 
-              className="text-sm mt-0.5"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {colors.length} colors • {palette.source === 'builtin' ? 'Built-in' : 'Custom'}
-            </p>
-          </div>
-
-          {mode === 'edit' && (
-            <button
-              onClick={handleDelete}
-              className="p-2 rounded-lg transition-all duration-200 hover:scale-110"
-              style={{ 
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444'
-              }}
-              title="Delete palette"
-              aria-label="Delete palette"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          )}
+            return (
+              <button
+                key={`${palette.id}-${color}-${index}`}
+                type="button"
+                className="cv-swatch aspect-square w-full relative"
+                style={{ backgroundColor: color }}
+                disabled={mode === 'edit'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void copyToClipboard(color);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title={mode === 'edit' ? undefined : `Click to copy: ${color.toUpperCase()}`}
+                aria-label={mode === 'edit' ? undefined : `Copy ${color.toUpperCase()}`}
+              />
+            );
+          })}
         </div>
 
-        {/* Tags */}
-        {palette.tags && palette.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {palette.tags.map(tag => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 text-xs rounded-full"
-                style={{ 
-                  backgroundColor: 'var(--color-surface)',
-                  color: 'var(--color-text-secondary)'
+        {/* Divider + Footer (pushed lower) */}
+        <div className="mt-auto pt-6" aria-hidden="true">
+          <div
+            className="h-px w-full"
+            style={{ backgroundColor: 'var(--color-border-strong)', opacity: 0.35 }}
+          />
+
+          <div className={`pt-3 flex items-center ${mode === 'edit' ? 'justify-start' : 'justify-end'}`}>
+            {mode === 'edit' && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="w-9 h-9 rounded-full transition-transform duration-150 hover:scale-105"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.10)',
+                  border: '1px solid rgba(239, 68, 68, 0.22)',
+                  color: '#ef4444',
                 }}
+                title="Delete palette"
+                aria-label="Delete palette"
               >
-                {tag}
-              </span>
-            ))}
+                <svg className="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+            <div
+              className={`text-sm font-semibold tracking-tight ${mode === 'edit' ? 'ml-2' : ''}`}
+              style={{ color: '#000000' }}
+            >
+              {palette.name}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
