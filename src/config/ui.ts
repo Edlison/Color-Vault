@@ -1,5 +1,7 @@
 import type { Theme } from '../types/palette';
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 export const UI_CONFIG = {
   /**
    * Feature flags
@@ -26,7 +28,7 @@ export const UI_CONFIG = {
     favicon: {
       // Keep this in sync with header logo for best branding consistency.
       // To disable, set href to an empty string.
-      href: '/logo.svg',
+      href: `${BASE_URL}logo.svg`,
       type: 'image/svg+xml',
     },
   },
@@ -37,7 +39,7 @@ export const UI_CONFIG = {
       // Use the same SVG file as favicon by default.
       kind: 'image' as 'mark' | 'image',
       // When kind === 'image'
-      imageSrc: '/logo.svg',
+      imageSrc: `${BASE_URL}logo.svg`,
       imageAlt: 'Logo',
     },
   },

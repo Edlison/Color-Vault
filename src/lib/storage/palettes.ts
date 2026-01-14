@@ -9,7 +9,7 @@ const PALETTES_STORAGE_KEY = 'cv_palettes_v1';
 export async function fetchBuiltinPalettes(): Promise<Palette[]> {
   try {
     // Force a fresh read (avoid stale cached palettes after rebuild/deploy).
-    const response = await fetch('/palettes.json', { cache: 'no-store' });
+    const response = await fetch(`${import.meta.env.BASE_URL}palettes.json`, { cache: 'no-store' });
     if (!response.ok) {
       console.warn('Failed to fetch palettes.json:', response.status);
       return [];
