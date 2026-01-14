@@ -23,6 +23,8 @@ import {
 } from './lib/storage/theme';
 
 function App() {
+  console.log('Color-Vault: App component rendering');
+  
   // Theme state
   const [theme, setTheme] = useState<Theme>(() => getStoredTheme());
   
